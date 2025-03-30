@@ -1,23 +1,23 @@
-import logo from './logo.svg';
+import { Container, Card } from 'react-bootstrap';
+import InputForm from './components/InputForm';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Container className="py-5">
+        <h1 className="mb-4">Fact Checker</h1>
+        <InputForm />
+
+        <Card>
+          <Card.Body>
+            <Card.Title>AI Response</Card.Title>
+            <Card.Text>
+              The fact-checking response will appear here...
+            </Card.Text>
+          </Card.Body>
+        </Card>
+      </Container>
     </div>
   );
 }
