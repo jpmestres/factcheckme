@@ -8,7 +8,7 @@ import { Form, Button, Spinner } from 'react-bootstrap';
  * @returns {JSX.Element} Rendered component
  */
 function InputForm({ onSubmit }) {
-  const [input, setInput] = useState('');
+  const [text, setText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   /**
@@ -17,16 +17,16 @@ function InputForm({ onSubmit }) {
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!text.trim()) return;
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/fact-check', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/fact-check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text: input }),
+        body: JSON.stringify({ text }),
       });
 
       if (!response.ok) {
@@ -36,6 +36,7 @@ function InputForm({ onSubmit }) {
       const data = await response.json();
       onSubmit(data);
     } catch (error) {
+      console.error('Error:', error);
       onSubmit({ error: error.message });
     } finally {
       setIsLoading(false);
@@ -45,15 +46,15 @@ function InputForm({ onSubmit }) {
   return (
     <Form onSubmit={handleSubmit} className="mb-4" role="form">
       <Form.Group className="mb-3">
-        <Form.Label htmlFor="factCheckInput" className="fw-bold">
-          Enter text to fact-check:
+        <Form.Label htmlFor="fact-check-input" className="fw-bold">
+          Enter a statement to fact check:
         </Form.Label>
         <Form.Control
           type="text"
-          id="factCheckInput"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your text here..."
+          id="fact-check-input"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Type your statement here..."
           aria-label="Fact check input"
           className="form-control-lg shadow-sm"
           disabled={isLoading}
@@ -64,7 +65,7 @@ function InputForm({ onSubmit }) {
         variant="primary" 
         size="lg" 
         className="w-100 shadow-sm"
-        disabled={!input.trim() || isLoading}
+        disabled={!text.trim() || isLoading}
       >
         {isLoading ? (
           <>
