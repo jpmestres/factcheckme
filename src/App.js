@@ -201,7 +201,7 @@ function App() {
         <Container>
           <Row>
             <Col className="text-center">
-              <p className="mb-0">© 2024 Jean-Paul Mestres. All rights reserved.</p>
+              <p className="mb-0">© 2025 Jean-Paul Mestres. All rights reserved.</p>
             </Col>
           </Row>
         </Container>
