@@ -36,10 +36,10 @@ const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://www.truthcheck.me', 'https://truthcheck.me']
     : 'http://localhost:3000',
-  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+  methods: ['POST', 'OPTIONS'],
   credentials: false,
   optionsSuccessStatus: 204,
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type'],
   maxAge: 86400 // 24 hours
 };
 
@@ -63,7 +63,7 @@ app.get('/api/health', (req, res) => {
 
 /**
  * Fact-checking endpoint that uses OpenAI's GPT-4 API to analyze text.
- * @route POST /api/fact-check
+ * @route POST /fact-check
  * @param {Object} req - Express request object
  * @param {Object} req.body - Request body
  * @param {string} req.body.text - Text to be fact-checked
@@ -72,10 +72,9 @@ app.get('/api/health', (req, res) => {
  * @throws {Error} 400 - If no text is provided
  * @throws {Error} 500 - If OpenAI API call fails
  */
-app.post('/api/fact-check', async (req, res) => {
+app.post('/fact-check', async (req, res) => {
   try {
     const { text } = req.body;
-
     if (!text) {
       return res.status(400).json({ error: 'Text is required' });
     }
@@ -87,7 +86,7 @@ app.post('/api/fact-check', async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "You are a fact-checking assistant. Analyze the provided text and determine if it is accurate. Provide a detailed response explaining your findings, including any potential inaccuracies or areas that need verification. You MUST respond in valid JSON format.  The 'grade' field MUST be a string."
+          content: "You are a fact-checking assistant. Provide accurate, well-reasoned responses with reliable sources."
         },
         {
           role: "user",
@@ -95,35 +94,21 @@ app.post('/api/fact-check', async (req, res) => {
         }
       ],
       temperature: 0.7,
-      max_tokens: 500
+      max_tokens: 1000
     });
 
     const response = completion.data.choices[0].message.content;
 
     try {
-      // Attempt to extract JSON (robustly)
-      const jsonMatch = response.match(/\{.*?\}/s);  // Find the first JSON-like object
-      if (jsonMatch) {
-        const jsonString = jsonMatch[0];
-        const aiResponse = JSON.parse(jsonString);
-        return res.json(aiResponse);
-      } else {
-        // If no JSON is found, return the raw response
-        console.warn("No JSON found in OpenAI response. Returning raw text.");
-        return res.json({ result: response });
-      }
+      const parsedResponse = JSON.parse(response);
+      res.json(parsedResponse);
     } catch (parseError) {
       console.error('Error parsing OpenAI response:', parseError);
-      // Optionally, you might want to return a more specific error message here
-      return res.status(500).json({ error: 'Failed to parse OpenAI response', details: parseError.message });
+      res.status(500).json({ error: 'Invalid response format from OpenAI' });
     }
-
   } catch (error) {
-    console.error('OpenAI API Error:', error);
-    return res.status(500).json({
-      error: 'Failed to process fact-checking request',
-      details: error.message
-    });
+    console.error('Error in fact-check endpoint:', error);
+    res.status(500).json({ error: 'Failed to process request' });
   }
 });
 
