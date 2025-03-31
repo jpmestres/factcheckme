@@ -9,7 +9,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 
 /**
  * Express application instance.
@@ -17,25 +17,12 @@ const { Configuration, OpenAIApi } = require('openai');
  * @type {express.Application}
  */
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3001;
 
-/**
- * OpenAI client instance.
- * Initialized with API key from environment variables.
- * @type {OpenAIApi}
- */
-const openai = new OpenAIApi(new Configuration({
-  apiKey: process.env.OPENAI_API_KEY
-}));
-
-/**
- * Add request logging middleware
- */
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  console.log('Request headers:', req.headers);
-  next();
-});
+// Log environment variables (without sensitive data)
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Port:', port);
+console.log('OpenAI API Key exists:', !!process.env.OPENAI_API_KEY);
 
 /**
  * CORS configuration options based on environment
@@ -43,13 +30,11 @@ app.use((req, res, next) => {
  */
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://www.truthcheck.me', 'https://truthcheck.me']
+    ? ['https://truthcheck-me.vercel.app', 'https://truthcheck-me.vercel.app/'] 
     : 'http://localhost:3000',
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: false,
-  optionsSuccessStatus: 204,
-  allowedHeaders: ['Content-Type'],
-  maxAge: 86400 // 24 hours
+  optionsSuccessStatus: 204
 };
 
 /**
@@ -60,6 +45,28 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', req.body);
+  next();
+});
+
+/**
+ * Initialize OpenAI client with error handling
+ */
+let openai;
+try {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+  console.log('OpenAI client initialized successfully');
+} catch (error) {
+  console.error('Error initializing OpenAI client:', error);
+  process.exit(1);
+}
+
 /**
  * Health check endpoint.
  * @route GET /health
@@ -68,12 +75,12 @@ app.use(express.json());
  * @returns {string} Response.timestamp - Timestamp of the request
  */
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    corsOrigins: corsOptions.origin
-  });
+  try {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 /**
@@ -88,44 +95,39 @@ app.get('/health', (req, res) => {
  * @throws {Error} 500 - If OpenAI API call fails
  */
 app.post('/api/fact-check', async (req, res) => {
-  console.log('Received fact-check request:', req.body);
   try {
     const { text } = req.body;
-    if (!text) {
-      console.log('No text provided in request');
-      return res.status(400).json({ error: 'Text is required' });
-    }
+    console.log('Received fact-check request for text:', text.substring(0, 50) + '...');
 
-    const prompt = `Fact-check the following statement: "${text}". Provide the response in JSON format with the following fields: "grade": (string, choose from 'Absolutely False', 'Mostly False', 'Neutral', 'Mostly True', 'Truth'), "reasoning" (string), and "sources" (array of strings).`;
-
-    const completion = await openai.createChatCompletion({
-      model: "gpt-4-turbo-preview",
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "You are a fact-checking assistant. Provide accurate, well-reasoned responses with reliable sources."
+          content: "You are a fact-checking assistant. Analyze the given text and provide a grade (Absolutely False, Mostly False, Neutral, Mostly True, Truth) along with reasoning and sources."
         },
         {
           role: "user",
-          content: prompt
+          content: text
         }
       ],
       temperature: 0.7,
-      max_tokens: 1000
+      max_tokens: 500
     });
 
-    const response = completion.data.choices[0].message.content;
+    const response = completion.choices[0].message.content;
+    console.log('OpenAI response received');
 
-    try {
-      const parsedResponse = JSON.parse(response);
-      res.json(parsedResponse);
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
-      res.status(500).json({ error: 'Invalid response format from OpenAI' });
-    }
+    // Parse the response into structured data
+    const lines = response.split('\n');
+    const grade = lines[0].replace('Grade:', '').trim();
+    const reasoning = lines[1].replace('Reasoning:', '').trim();
+    const sources = lines[2].replace('Sources:', '').trim();
+
+    res.json({ grade, reasoning, sources });
   } catch (error) {
-    console.error('Error in fact-check endpoint:', error);
-    res.status(500).json({ error: 'Failed to process request' });
+    console.error('Fact-check error:', error);
+    res.status(500).json({ error: 'Failed to fact-check text' });
   }
 });
 
@@ -141,18 +143,24 @@ app.use((req, res) => {
 });
 
 /**
+ * Error handling middleware
+ */
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+/**
  * Server Startup
  * Only starts the server if this file is run directly (not imported as a module).
- * Uses PORT from environment variables or defaults to 5000.
+ * Uses PORT from environment variables or defaults to 3001.
  */
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
-    console.log(`Environment: ${process.env.NODE_ENV}`);
-    console.log('CORS origins:', corsOptions.origin);
-    console.log('Available routes:');
-    console.log('- GET /health');
-    console.log('- POST /api/fact-check');
+  }).on('error', (error) => {
+    console.error('Server failed to start:', error);
+    process.exit(1);
   });
 }
 
