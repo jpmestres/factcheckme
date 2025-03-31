@@ -21,16 +21,16 @@ function ResultCard({ result }) {
   }
 
   const getBackgroundColor = (grade) => {
-    switch (grade.toLowerCase()) {
-      case 'absolutely false':
+    switch (grade) {
+      case 'Absolutely False':
         return '#dc3545'; // Dark red
-      case 'mostly false':
+      case 'Mostly False':
         return '#ff6b6b'; // Light red
-      case 'neutral':
+      case 'Neutral':
         return '#ffd93d'; // Yellow
-      case 'mostly true':
+      case 'Mostly True':
         return '#6bff6b'; // Light green
-      case 'truth':
+      case 'Truth':
         return '#28a745'; // Full green
       default:
         return '#6c757d'; // Gray for unknown
