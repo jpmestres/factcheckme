@@ -20,8 +20,20 @@ function ResultCard({ result }) {
     );
   }
 
+  console.log('ResultCard received result:', result);
+  console.log('Grade value:', result.grade);
+  console.log('Grade type:', typeof result.grade);
+
   const getBackgroundColor = (grade) => {
-    switch (grade) {
+    console.log('getBackgroundColor called with grade:', grade);
+    console.log('Grade type in function:', typeof grade);
+    console.log('Grade length:', grade.length);
+    console.log('Grade character codes:', Array.from(grade).map(c => c.charCodeAt(0)));
+    
+    // Trim any whitespace and normalize the grade
+    const normalizedGrade = grade.trim();
+    
+    switch (normalizedGrade) {
       case 'Absolutely False':
         return '#dc3545'; // Dark red
       case 'Mostly False':
@@ -33,9 +45,13 @@ function ResultCard({ result }) {
       case 'Truth':
         return '#28a745'; // Full green
       default:
+        console.log('No matching grade found, using default color');
         return '#6c757d'; // Gray for unknown
     }
   };
+
+  const backgroundColor = getBackgroundColor(result.grade);
+  console.log('Selected background color:', backgroundColor);
 
   return (
     <Card className="shadow-sm mb-4">
@@ -44,7 +60,7 @@ function ResultCard({ result }) {
           className="mb-3" 
           style={{ 
             color: 'white',
-            backgroundColor: getBackgroundColor(result.grade),
+            backgroundColor: backgroundColor,
             padding: '0.5rem 1rem',
             borderRadius: '0.25rem',
             display: 'inline-block'
