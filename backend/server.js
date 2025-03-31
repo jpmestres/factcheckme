@@ -29,6 +29,14 @@ const openai = new OpenAIApi(new Configuration({
 }));
 
 /**
+ * Add request logging middleware
+ */
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+/**
  * CORS configuration options based on environment
  * @type {Object}
  */
@@ -53,12 +61,13 @@ app.use(express.json());
 
 /**
  * Health check endpoint.
- * @route GET /api/health
- * @returns {Object} Response object with status
+ * @route GET /health
+ * @returns {Object} Response object with status and timestamp
  * @returns {string} Response.status - Status of the server
+ * @returns {string} Response.timestamp - Timestamp of the request
  */
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 /**
@@ -73,9 +82,11 @@ app.get('/api/health', (req, res) => {
  * @throws {Error} 500 - If OpenAI API call fails
  */
 app.post('/api/fact-check', async (req, res) => {
+  console.log('Received fact-check request:', req.body);
   try {
     const { text } = req.body;
     if (!text) {
+      console.log('No text provided in request');
       return res.status(400).json({ error: 'Text is required' });
     }
 
@@ -131,6 +142,8 @@ app.use((req, res) => {
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log('CORS origins:', corsOptions.origin);
   });
 }
 

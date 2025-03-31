@@ -21,6 +21,7 @@ function InputForm({ onSubmit }) {
 
     setIsLoading(true);
     try {
+      console.log('Sending request to:', `${process.env.REACT_APP_API_URL}/api/fact-check`);
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/fact-check`, {
         method: 'POST',
         headers: {
@@ -29,14 +30,20 @@ function InputForm({ onSubmit }) {
         body: JSON.stringify({ text }),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error('Failed to check facts');
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Failed to check facts: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Response data:', data);
       onSubmit(data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error details:', error);
       onSubmit({ error: error.message });
     } finally {
       setIsLoading(false);
