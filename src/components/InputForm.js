@@ -21,6 +21,15 @@ function InputForm({ onSubmit }) {
 
     setIsLoading(true);
     try {
+      // First check if the server is up
+      const healthCheck = await fetch(`${process.env.REACT_APP_API_URL}/health`);
+      if (!healthCheck.ok) {
+        throw new Error('Server is not responding');
+      }
+      const healthData = await healthCheck.json();
+      console.log('Server health:', healthData);
+
+      // Then send the fact-check request
       console.log('Sending request to:', `${process.env.REACT_APP_API_URL}/api/fact-check`);
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/fact-check`, {
         method: 'POST',

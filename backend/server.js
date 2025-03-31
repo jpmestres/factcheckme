@@ -33,6 +33,7 @@ const openai = new OpenAIApi(new Configuration({
  */
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log('Request headers:', req.headers);
   next();
 });
 
@@ -44,7 +45,7 @@ const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://www.truthcheck.me', 'https://truthcheck.me']
     : 'http://localhost:3000',
-  methods: ['POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'OPTIONS'],
   credentials: false,
   optionsSuccessStatus: 204,
   allowedHeaders: ['Content-Type'],
@@ -67,7 +68,12 @@ app.use(express.json());
  * @returns {string} Response.timestamp - Timestamp of the request
  */
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    corsOrigins: corsOptions.origin
+  });
 });
 
 /**
@@ -144,6 +150,9 @@ if (require.main === module) {
     console.log(`Server is running on port ${port}`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log('CORS origins:', corsOptions.origin);
+    console.log('Available routes:');
+    console.log('- GET /health');
+    console.log('- POST /api/fact-check');
   });
 }
 
