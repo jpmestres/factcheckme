@@ -63,7 +63,7 @@ app.get('/api/health', (req, res) => {
 
 /**
  * Fact-checking endpoint that uses OpenAI's GPT-4 API to analyze text.
- * @route POST /fact-check
+ * @route POST /api/fact-check
  * @param {Object} req - Express request object
  * @param {Object} req.body - Request body
  * @param {string} req.body.text - Text to be fact-checked
@@ -72,7 +72,7 @@ app.get('/api/health', (req, res) => {
  * @throws {Error} 400 - If no text is provided
  * @throws {Error} 500 - If OpenAI API call fails
  */
-app.post('/fact-check', async (req, res) => {
+app.post('/api/fact-check', async (req, res) => {
   try {
     const { text } = req.body;
     if (!text) {
