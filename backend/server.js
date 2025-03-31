@@ -9,7 +9,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const OpenAI = require('openai');
+const { Configuration, OpenAIApi } = require('openai');
 
 /**
  * Express application instance.
@@ -22,11 +22,11 @@ const port = process.env.PORT || 5000;
 /**
  * OpenAI client instance.
  * Initialized with API key from environment variables.
- * @type {OpenAI}
+ * @type {OpenAIApi}
  */
-const openai = new OpenAI({
+const openai = new OpenAIApi(new Configuration({
   apiKey: process.env.OPENAI_API_KEY
-});
+}));
 
 /**
  * CORS configuration options based on environment
@@ -34,11 +34,13 @@ const openai = new OpenAI({
  */
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? 'https://www.truthcheck.me'
+    ? ['https://www.truthcheck.me', 'https://truthcheck.me']
     : 'http://localhost:3000',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: false, // Set to true if you need to handle cookies
-  optionsSuccessStatus: 204
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+  credentials: false,
+  optionsSuccessStatus: 204,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400 // 24 hours
 };
 
 /**
@@ -80,7 +82,7 @@ app.post('/api/fact-check', async (req, res) => {
 
     const prompt = `Fact-check the following statement: "${text}". Provide the response in JSON format with the following fields: "grade": (string, choose from 'Absolutely False', 'Mostly False', 'Neutral', 'Mostly True', 'Truth'), "reasoning" (string), and "sources" (array of strings).`;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await openai.createChatCompletion({
       model: "gpt-4-turbo-preview",
       messages: [
         {
@@ -96,7 +98,7 @@ app.post('/api/fact-check', async (req, res) => {
       max_tokens: 500
     });
 
-    const response = completion.choices[0].message.content;
+    const response = completion.data.choices[0].message.content;
 
     try {
       // Attempt to extract JSON (robustly)
