@@ -27,10 +27,8 @@ function ResultCard({ result }) {
   const getBackgroundColor = (grade) => {
     console.log('getBackgroundColor called with grade:', grade);
     console.log('Grade type in function:', typeof grade);
-    console.log('Grade length:', grade.length);
-    console.log('Grade character codes:', Array.from(grade).map(c => c.charCodeAt(0)));
     
-    // Trim any whitespace and normalize the grade
+    // Normalize the grade string
     const normalizedGrade = grade.trim();
     
     switch (normalizedGrade) {

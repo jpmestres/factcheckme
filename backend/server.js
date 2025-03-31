@@ -99,12 +99,18 @@ app.post('/api/fact-check', async (req, res) => {
     const { text } = req.body;
     console.log('Received fact-check request for text:', text.substring(0, 50) + '...');
 
+    if (!text || typeof text !== 'string') {
+      console.error('Invalid text input:', text);
+      return res.status(400).json({ error: 'Text is required and must be a string' });
+    }
+
+    console.log('Sending request to OpenAI...');
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "You are a fact-checking assistant. Analyze the given text and provide a response in the following format:\n\nGrade: [Absolutely False, Mostly False, Neutral, Mostly True, or Truth]\nReasoning: [Your detailed analysis]\nSources: [List of sources or references]"
+          content: "You are a fact-checking assistant. Analyze the given text and provide a response in the following format:\n\nGrade: [Absolutely False, Mostly False, Neutral, Mostly True, or Truth]\nReasoning: [Your detailed analysis]\nSources: [Optional list of sources or references. If no specific sources are available, this line can be omitted.]"
         },
         {
           role: "user",
@@ -115,33 +121,64 @@ app.post('/api/fact-check', async (req, res) => {
       max_tokens: 500
     });
 
-    const response = completion.choices[0].message.content;
     console.log('OpenAI response received');
+    const response = completion.choices[0].message.content;
+    console.log('Raw OpenAI response:', response);
 
     // Parse the response into structured data
     const lines = response.split('\n').filter(line => line.trim());
     let grade = '', reasoning = '', sources = '';
 
     for (const line of lines) {
-      if (line.toLowerCase().startsWith('grade:')) {
-        grade = line.replace(/^grade:\s*/i, '').trim();
-      } else if (line.toLowerCase().startsWith('reasoning:')) {
-        reasoning = line.replace(/^reasoning:\s*/i, '').trim();
-      } else if (line.toLowerCase().startsWith('sources:')) {
-        sources = line.replace(/^sources:\s*/i, '').trim();
+      const trimmedLine = line.trim();
+      if (trimmedLine.toLowerCase().startsWith('grade:')) {
+        grade = trimmedLine.replace(/^grade:\s*/i, '').trim();
+      } else if (trimmedLine.toLowerCase().startsWith('reasoning:')) {
+        reasoning = trimmedLine.replace(/^reasoning:\s*/i, '').trim();
+      } else if (trimmedLine.toLowerCase().startsWith('sources:')) {
+        // Get all lines after "Sources:" until we hit another section or end
+        const sourceLines = [];
+        let i = lines.indexOf(line) + 1;
+        while (i < lines.length && 
+               !lines[i].toLowerCase().startsWith('grade:') && 
+               !lines[i].toLowerCase().startsWith('reasoning:')) {
+          const sourceLine = lines[i].trim();
+          if (sourceLine) {
+            // Remove numbering if present (e.g., "1. ", "2. ")
+            sourceLines.push(sourceLine.replace(/^\d+\.\s*/, ''));
+          }
+          i++;
+        }
+        sources = sourceLines.join(', ');
       }
     }
 
+    console.log('Parsed response:', { grade, reasoning, sources });
+
     // Validate the response
-    if (!grade || !reasoning || !sources) {
-      console.error('Invalid response format:', response);
-      throw new Error('Invalid response format from OpenAI');
+    if (!grade) {
+      console.error('Missing grade in response');
+      throw new Error('Invalid response format: Missing grade');
+    }
+    if (!reasoning) {
+      console.error('Missing reasoning in response');
+      throw new Error('Invalid response format: Missing reasoning');
+    }
+
+    // If no sources provided, use a default message
+    if (!sources) {
+      console.log('No sources provided, using default message');
+      sources = 'Based on general knowledge and scientific understanding';
     }
 
     res.json({ grade, reasoning, sources });
   } catch (error) {
     console.error('Fact-check error:', error);
-    res.status(500).json({ error: 'Failed to fact-check text' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Failed to fact-check text',
+      details: error.message
+    });
   }
 });
 

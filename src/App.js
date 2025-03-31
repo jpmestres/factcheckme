@@ -6,21 +6,21 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 /**
  * Get the background color based on the grade
- * @param {number} grade - The numeric grade from the API (1-5)
+ * @param {string} grade - The grade from the API
  * @returns {string} The background color in hex format
  */
 const getBackgroundColor = (grade) => {
   switch (grade) {
-    case 1:
-      return '#8B0000'; // Dark red for absolutely false
-    case 2:
-      return '#FF6B6B'; // Light red for mostly false
-    case 3:
-      return '#FFD700'; // Yellow for neutral
-    case 4:
-      return '#90EE90'; // Light green for mostly true
-    case 5:
-      return '#32CD32'; // Full green for truth
+    case 'Absolutely False':
+      return '#dc3545'; // Dark red
+    case 'Mostly False':
+      return '#ff6b6b'; // Light red
+    case 'Neutral':
+      return '#ffd93d'; // Yellow
+    case 'Mostly True':
+      return '#6bff6b'; // Light green
+    case 'Truth':
+      return '#28a745'; // Full green
     default:
       return '#ffffff'; // White for no grade
   }
@@ -170,15 +170,10 @@ function App() {
                 <Card.Body className="p-4">
                   {factCheckResponse.grade ? (
                     <>
-                      <Card.Text><strong>Grade:</strong> {getGradeText(factCheckResponse.grade)}</Card.Text>
+                      <Card.Text><strong>Grade:</strong> {factCheckResponse.grade}</Card.Text>
                       <Card.Text><strong>Reasoning:</strong> {factCheckResponse.reasoning}</Card.Text>
-                      <div>
-                        <strong>Sources:</strong>
-                        {formatSources(factCheckResponse.sources)}
-                      </div>
+                      <Card.Text><strong>Sources:</strong> {factCheckResponse.sources}</Card.Text>
                     </>
-                  ) : factCheckResponse.result ? (
-                    <Card.Text>{factCheckResponse.result}</Card.Text>
                   ) : (
                     <Card.Text>Unexpected response format received from the API.</Card.Text>
                   )}
