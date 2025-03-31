@@ -50,36 +50,41 @@ const getGradeText = (grade) => {
 
 /**
  * Format sources string into an array of clickable links
- * @param {string|Array} sources - The sources from the API (string or array)
+ * @param {string} sources - The sources string from the API
  * @returns {Array} Array of JSX elements for each source link
  */
 const formatSources = (sources) => {
   if (!sources) return null;
   
-  // Convert sources to array if it's a string
-  let sourceLinks = Array.isArray(sources) 
-    ? sources 
-    : typeof sources === 'string' 
-      ? sources.split('\n').filter(link => link.trim())
-      : [];
-  
-  return sourceLinks.map((link, index) => (
-    <div key={index} className="mb-2">
-      <a 
-        href={link.trim()} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="text-decoration-none"
-        onClick={(e) => {
-          e.preventDefault();
-          window.open(link.trim(), '_blank');
-        }}
-      >
-        <i className="fas fa-external-link-alt me-1"></i>
-        {link.trim()}
-      </a>
-    </div>
-  ));
+  // Split the sources string by commas and clean up each source
+  return sources.split(',').map(source => {
+    // Remove leading/trailing whitespace and dashes
+    const cleanSource = source.trim().replace(/^-?\s*/, '');
+    
+    // Check if it's a URL
+    if (cleanSource.startsWith('http')) {
+      return (
+        <div key={cleanSource} className="mb-2">
+          <a 
+            href={cleanSource}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-decoration-none"
+            onClick={(e) => {
+              e.preventDefault();
+              window.open(cleanSource, '_blank');
+            }}
+          >
+            <i className="fas fa-external-link-alt me-1"></i>
+            {cleanSource}
+          </a>
+        </div>
+      );
+    }
+    
+    // If not a URL, return as plain text
+    return <div key={cleanSource} className="mb-2">{cleanSource}</div>;
+  });
 };
 
 /**
@@ -172,7 +177,10 @@ function App() {
                     <>
                       <Card.Text><strong>Grade:</strong> {factCheckResponse.grade}</Card.Text>
                       <Card.Text><strong>Reasoning:</strong> {factCheckResponse.reasoning}</Card.Text>
-                      <Card.Text><strong>Sources:</strong> {factCheckResponse.sources}</Card.Text>
+                      <div>
+                        <strong>Sources:</strong>
+                        {formatSources(factCheckResponse.sources)}
+                      </div>
                     </>
                   ) : (
                     <Card.Text>Unexpected response format received from the API.</Card.Text>

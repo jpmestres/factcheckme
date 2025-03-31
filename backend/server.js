@@ -110,7 +110,7 @@ app.post('/api/fact-check', async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "You are a fact-checking assistant. Analyze the given text and provide a response in the following format:\n\nGrade: [Absolutely False, Mostly False, Neutral, Mostly True, or Truth]\nReasoning: [Your detailed analysis]\nSources: [Optional list of sources or references. If no specific sources are available, this line can be omitted.]"
+          content: "You are a fact-checking assistant. Analyze the given text and provide a response in the following format:\n\nGrade: [Absolutely False, Mostly False, Neutral, Mostly True, or Truth]\nReasoning: [Your detailed analysis]\nSources: [List of links to sources or references.]"
         },
         {
           role: "user",
@@ -168,7 +168,7 @@ app.post('/api/fact-check', async (req, res) => {
     // If no sources provided, use a default message
     if (!sources) {
       console.log('No sources provided, using default message');
-      sources = 'Based on general knowledge and scientific understanding';
+      sources = 'No sources found. Answer based on general knowledge.';
     }
 
     res.json({ grade, reasoning, sources });
