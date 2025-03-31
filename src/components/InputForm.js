@@ -21,8 +21,8 @@ function InputForm({ onSubmit }) {
 
     setIsLoading(true);
     try {
-      console.log('Sending request to:', `${process.env.REACT_APP_API_URL}/fact-check`);
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/fact-check`, {
+      console.log('Sending request to:', `${process.env.REACT_APP_API_URL}/api/fact-check`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/fact-check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
