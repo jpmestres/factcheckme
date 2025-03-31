@@ -30,7 +30,7 @@ console.log('OpenAI API Key exists:', !!process.env.OPENAI_API_KEY);
  */
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://truthcheck-me.vercel.app', 'https://truthcheck-me.vercel.app/'] 
+    ? ['https://www.truthcheck.me', 'https://truthcheck.me', 'https://truthcheck-me.vercel.app'] 
     : 'http://localhost:3000',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: false,
@@ -104,7 +104,7 @@ app.post('/api/fact-check', async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "You are a fact-checking assistant. Analyze the given text and provide a grade (Absolutely False, Mostly False, Neutral, Mostly True, Truth) along with reasoning and sources."
+          content: "You are a fact-checking assistant. Analyze the given text and provide a response in the following format:\n\nGrade: [Absolutely False, Mostly False, Neutral, Mostly True, or Truth]\nReasoning: [Your detailed analysis]\nSources: [List of sources or references]"
         },
         {
           role: "user",
@@ -119,10 +119,24 @@ app.post('/api/fact-check', async (req, res) => {
     console.log('OpenAI response received');
 
     // Parse the response into structured data
-    const lines = response.split('\n');
-    const grade = lines[0].replace('Grade:', '').trim();
-    const reasoning = lines[1].replace('Reasoning:', '').trim();
-    const sources = lines[2].replace('Sources:', '').trim();
+    const lines = response.split('\n').filter(line => line.trim());
+    let grade = '', reasoning = '', sources = '';
+
+    for (const line of lines) {
+      if (line.toLowerCase().startsWith('grade:')) {
+        grade = line.replace(/^grade:\s*/i, '').trim();
+      } else if (line.toLowerCase().startsWith('reasoning:')) {
+        reasoning = line.replace(/^reasoning:\s*/i, '').trim();
+      } else if (line.toLowerCase().startsWith('sources:')) {
+        sources = line.replace(/^sources:\s*/i, '').trim();
+      }
+    }
+
+    // Validate the response
+    if (!grade || !reasoning || !sources) {
+      console.error('Invalid response format:', response);
+      throw new Error('Invalid response format from OpenAI');
+    }
 
     res.json({ grade, reasoning, sources });
   } catch (error) {
