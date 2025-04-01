@@ -44,10 +44,6 @@ const AboutPage = () => {
                 Knowledge of the world is limited up to October 2023. Statements about events after that date may not be answered correctly.
               </p>
 
-              <p className="mb-4">
-                This tool is not affiliated with OpenAI or any other organization. It is a personal project created by <a href="https://github.com/jpmestres">Jean-Paul Mestres</a>.
-              </p>
-
               <h2 className="h3 mb-3">Future Plans</h2>
               <p className="mb-4">
                 We're actively working on new features, including:
