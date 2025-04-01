@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Container, Row, Col, Card, Alert, Navbar, Nav } from 'react-bootstrap';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import InputForm from './components/InputForm';
 import AdSense from './components/AdSense';
-import ResultCard from './components/ResultCard';
 import AboutPage from './components/AboutPage';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css';
 
 /**
  * Get the background color based on the grade
@@ -129,7 +127,7 @@ function App() {
 
   return (
     <Router>
-      <div className="App">
+      <div className="min-vh-100 d-flex flex-column">
         <Navbar bg="primary" variant="dark" expand="lg" className="mb-4">
           <Container>
             <Navbar.Brand as={Link} to="/">TruthCheckMe</Navbar.Brand>
@@ -146,20 +144,67 @@ function App() {
         <Routes>
           <Route path="/about" element={<AboutPage />} />
           <Route path="/" element={
-            <Container>
-              <div className="text-center mb-4">
-                <h1 className="display-4">TruthCheckMe</h1>
-                <p className="lead">Get instant fact-checking for any statement</p>
-              </div>
-              <InputForm onSubmit={handleFactCheckResponse} />
-              {error && (
-                <Alert variant="danger" className="mt-4">
-                  {error}
-                </Alert>
-              )}
-              {factCheckResponse && !error && (
-                <ResultCard result={factCheckResponse} />
-              )}
+            <Container 
+              className="flex-grow-1 py-5" 
+              role="main"
+              style={{
+                backgroundColor: getBackgroundColor(factCheckResponse?.grade),
+                transition: 'background-color 0.3s ease',
+                minHeight: '100vh'
+              }}
+            >
+              <Row className="justify-content-center">
+                <Col className="col-12 col-md-8 col-lg-6">
+                  <div className="text-center mb-5">
+                    <h1 className="text-center mb-4">TruthCheckMe</h1>
+                    <p className="lead text-muted">
+                      Enter any statement to check its factual accuracy using AI
+                    </p>
+                  </div>
+
+                  <InputForm onSubmit={handleFactCheckResponse} />
+
+                  {error && (
+                    <Alert variant="danger" className="mt-4 shadow-sm">
+                      <Alert.Heading className="d-flex align-items-center">
+                        <i className="fas fa-exclamation-circle me-2"></i>
+                        Error
+                      </Alert.Heading>
+                      <p className="mb-0">{error}</p>
+                    </Alert>
+                  )}
+
+                  {factCheckResponse && !error && (
+                    <Card className="mt-4 shadow-sm" role="region" aria-label="Fact check result">
+                      <Card.Header className={`${factCheckResponse.grade ? 'bg-primary' : 'bg-danger'} text-white py-3`}>
+                        <div className="d-flex align-items-center">
+                          <i className={`fas ${factCheckResponse.grade ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2`}></i>
+                          {factCheckResponse.grade ? 'Fact Check Result' : 'Error'}
+                        </div>
+                      </Card.Header>
+                      <Card.Body className="p-4">
+                        {factCheckResponse.grade ? (
+                          <>
+                            <Card.Text><strong>Grade:</strong> {factCheckResponse.grade}</Card.Text>
+                            <Card.Text><strong>Reasoning:</strong> {factCheckResponse.reasoning}</Card.Text>
+                            <div>
+                              <strong>Sources:</strong>
+                              {formatSources(factCheckResponse.sources)}
+                            </div>
+                          </>
+                        ) : (
+                          <Card.Text>Unexpected response format received from the API.</Card.Text>
+                        )}
+                      </Card.Body>
+                    </Card>
+                  )}
+
+                  {/* AdSense ad placed below the AI response */}
+                  <div className="mt-5">
+                    <AdSense />
+                  </div>
+                </Col>
+              </Row>
             </Container>
           } />
         </Routes>
