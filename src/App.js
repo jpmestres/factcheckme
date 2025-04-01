@@ -128,7 +128,7 @@ function App() {
   return (
     <Router>
       <div className="min-vh-100 d-flex flex-column">
-        <Navbar bg="primary" variant="dark" expand="lg" className="mb-4">
+        <Navbar bg="primary" variant="dark" expand="lg">
           <Container>
             <Navbar.Brand as={Link} to="/">TruthCheckMe</Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
