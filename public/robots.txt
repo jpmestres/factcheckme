@@ -1,3 +1,11 @@
 # https://www.robotstxt.org/robotstxt.html
+# Allow all crawlers
 User-agent: *
-Disallow:
+Allow: /
+
+# Sitemap location
+Sitemap: https://truthcheck.me/sitemap.xml
+
+# Disallow admin or API routes if they exist
+Disallow: /api/
+Disallow: /admin/

@@ -106,7 +106,7 @@ app.post('/api/fact-check', async (req, res) => {
 
     console.log('Sending request to OpenAI...');
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -117,8 +117,8 @@ app.post('/api/fact-check', async (req, res) => {
           content: text
         }
       ],
-      temperature: 0.7,
-      max_tokens: 500
+      temperature: 0.3,
+      max_tokens: 400
     });
 
     console.log('OpenAI response received');
